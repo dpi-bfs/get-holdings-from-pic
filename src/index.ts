@@ -67,38 +67,21 @@ export async function post(
         ]
     }
 
-    const warehouses = [
-      {
-        warehouseNumber: '1',
-        assets: ['crane', 'forklift', 'hammer', 'drill'],
-      },
-      {
-        warehouseNumber: '2',
-        assets: ['lightsaber', 'pod-racer seat', 'hyper-drive'],
-      },
-    ]
-    const warehouseNumber = '1'
-    const warehouse = warehouses.find(
-      (warehouse) => warehouse.warehouseNumber === warehouseNumber,
-    )
-
     const TheSingleDynamicElement = 
         OneBlinkSdk.Forms.generateFormElement({
-          name: 'MyRadio',
-          label: `My Radio`,
-          type: 'radio',
-          buttons: true,
-          required: true,      
+          name: 'PropertyHoldings',
+          label: 'Property holdings',
+          type: 'select',
+          required: true,
+          multi: true,      
           options: [
             {
               value: 'Holding  01',
               label: 'Holding  01',
-              displayAlways: true
             },
             {
               value: 'Holding  02',
               label: 'Holding  02',
-              displayAlways: true
             }
           ],
         })
