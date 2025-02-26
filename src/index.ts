@@ -1,9 +1,10 @@
 import { OneBlinkAPIHostingRequest, OneBlinkAPIHostingResponse } from '@oneblink/cli'
 import * as OneBlinkSdk from '@oneblink/sdk'
 import Boom from '@hapi/boom'
+
+import * as ProjectTypes from './projectTypes.mjs'
 // import * as Globals from './globals.js'
 // import * as HttpWrapper from './BfsLibrary/httpWrapper.js'
-// import * as PermitTypes from './permitTypes.mjs'
 // import * as FormLookupReturnPacket from './formLookupReturnPacket.js'
 
 import * as HttpWrapper from './LocalLibrary/httpWrapper.js'
@@ -37,9 +38,9 @@ export async function post(
     const data = { Pic: PropertyPic };
     const headers = { "x-global-get-holdings-secret-key": process.env.POWER_AUTOMATE_SECRET_KEY! }
 
-    const powerAutomateResponseJson = await HttpWrapper.postData(url, data, headers)
-    if (!powerAutomateResponseJson) {
-      throw Boom.badRequest('Could not get a powerAutomateResponseJson in time. Please try again.')
+    const holdings: ProjectTypes.Holding[] = await HttpWrapper.postData(url, data, headers)
+    if (!holdings) {
+      throw Boom.badRequest('Could not get a holdings in time. Please try again.')
     } 
 
     // Returning a well formed object, without error codes, is enough for the OneBlink UI's Data lookup element
@@ -51,39 +52,25 @@ export async function post(
     //   "TempPicDataTarget": JSON.stringify(submission),
     //   "OtherElement": "Some Value"
     // } 
-    console.log("powerAutomateResponseJson", JSON.stringify(powerAutomateResponseJson));
+    console.log("holdings", JSON.stringify(holdings));
 
-    const payload = { 
-        "TempHoldingsText": JSON.stringify(powerAutomateResponseJson),
-        "PropertyHoldings": [
-          {
-            "value": "Holding  01",
-            "label": "Holding  01"
-          },
-          {
-            "value": "Holding  02",
-            "label": "Holding  02"
-          }
-        ]
-    }
+    const holdingsAsOptions = holdings.map((holding: ProjectTypes.Holding) => ({
+      label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${holding.CentroidLat} ${holding.CentroidLong}`,
+      value: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${holding.CentroidLat} ${holding.CentroidLong}`,
+    }))
+
+    console.log('holdingsAsOptions', holdingsAsOptions);
 
     const TheSingleDynamicElement = 
         OneBlinkSdk.Forms.generateFormElement({
           name: 'PropertyHoldings',
           label: 'Property holdings',
           type: 'select',
+          hint: 'Select all of the holdings where cattle tick was detected. If there is only one holding, select that.',
+          hintPosition: 'BELOW_LABEL',
           required: true,
           multi: true,      
-          options: [
-            {
-              value: 'Holding  01',
-              label: 'Holding  01',
-            },
-            {
-              value: 'Holding  02',
-              label: 'Holding  02',
-            }
-          ],
+          options: holdingsAsOptions
         })
 
     // We need to return an array of elements, even for a single element.    
