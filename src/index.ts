@@ -15,7 +15,7 @@ export async function post(
   }>,
   response: OneBlinkAPIHostingResponse<any>
 ) {
-  console.log("hello world");
+  console.time('totalLookupTimeUntilJustBeforeReturn');
   const triggerElementName = request.body.element.name;
   console.log("triggerElementName", triggerElementName);
   
@@ -72,6 +72,7 @@ export async function post(
       TheSingleDynamicElement
     ]
     console.log('dynamicElements', JSON.stringify(dynamicElements));
+    console.timeEnd('totalLookupTimeUntilJustBeforeReturn');
     return response.setStatusCode(200).setPayload(dynamicElements)
 
     // Returning a well formed object, without error codes, is enough for the OneBlink UI's Data lookup element
