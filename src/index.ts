@@ -1,12 +1,10 @@
+// Remote libraries
 import { OneBlinkAPIHostingRequest, OneBlinkAPIHostingResponse } from '@oneblink/cli'
 import * as OneBlinkSdk from '@oneblink/sdk'
 import Boom from '@hapi/boom'
 
+// Local libraries
 import * as ProjectTypes from './projectTypes.mjs'
-// import * as Globals from './globals.js'
-// import * as HttpWrapper from './BfsLibrary/httpWrapper.js'
-// import * as FormLookupReturnPacket from './formLookupReturnPacket.js'
-
 import * as HttpWrapper from './LocalLibrary/httpWrapper.js'
 
 export async function post(
@@ -43,22 +41,7 @@ export async function post(
       throw Boom.badRequest('Could not get a holdings in time. Please try again.')
     } 
 
-    // Returning a well formed object, without error codes, is enough for the OneBlink UI's Data lookup element
-    // to register this as valid.
-    // return {} 
-
-    // If we wanted to return values to other elements we'd do something like the following
-    // return { 
-    //   "TempPicDataTarget": JSON.stringify(submission),
-    //   "OtherElement": "Some Value"
-    // } 
     console.log("holdings", JSON.stringify(holdings));
-
-    // String values
-    // const holdingsAsOptions = holdings.map((holding: ProjectTypes.Holding) => ({
-    //   label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${holding.CentroidLat} ${holding.CentroidLong}`,
-    //   value: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${holding.CentroidLat} ${holding.CentroidLong}`,
-    // }))
 
     // Object values
     const holdingsAsOptions = holdings.map((holding: ProjectTypes.Holding) => ({
@@ -91,6 +74,16 @@ export async function post(
     console.log('dynamicElements', JSON.stringify(dynamicElements));
     return response.setStatusCode(200).setPayload(dynamicElements)
 
+    // Returning a well formed object, without error codes, is enough for the OneBlink UI's Data lookup element
+    // to register this as valid.
+    // return {} 
+
+    // If we wanted to return values to other elements we'd do something like the following
+    // return { 
+    //   "TempPicDataTarget": JSON.stringify(submission),
+    //   "OtherElement": "Some Value"
+    // } 
+
   } catch (e) {
     if (e instanceof Boom.Boom && e.output && e.output.statusCode === 404) {
       
@@ -105,7 +98,6 @@ export async function post(
 
     } else if (e instanceof Boom.Boom && e.output && e.output.statusCode === 502 && e.message.includes("The server did not receive a response from an upstream server")) {
       throw Boom.badRequest(`The PropertyPic ${PropertyPic} could not be found in the database.`)
-
 
     } else {
       console.error(e);
