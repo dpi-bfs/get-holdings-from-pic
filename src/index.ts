@@ -54,9 +54,16 @@ export async function post(
     // } 
     console.log("holdings", JSON.stringify(holdings));
 
+    // String values
+    // const holdingsAsOptions = holdings.map((holding: ProjectTypes.Holding) => ({
+    //   label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${holding.CentroidLat} ${holding.CentroidLong}`,
+    //   value: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${holding.CentroidLat} ${holding.CentroidLong}`,
+    // }))
+
+    // Object values
     const holdingsAsOptions = holdings.map((holding: ProjectTypes.Holding) => ({
       label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${holding.CentroidLat} ${holding.CentroidLong}`,
-      value: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${holding.CentroidLat} ${holding.CentroidLong}`,
+      value: JSON.stringify(holding),
     }))
 
     console.log('holdingsAsOptions', holdingsAsOptions);
@@ -65,11 +72,15 @@ export async function post(
         OneBlinkSdk.Forms.generateFormElement({
           name: 'PropertyHoldings',
           label: 'Property holdings',
-          type: 'select',
+          // type: 'select',
+          type: 'checkboxes',
+          // hint: 'Select all of the holdings where cattle tick was detected. If there is only one holding, select that. To select multiple holdings, hold the ctrl key (on Macs the command key) down and either: click with your mouse; or use keyboard arrows and space bar.', // for select
           hint: 'Select all of the holdings where cattle tick was detected. If there is only one holding, select that.',
           hintPosition: 'BELOW_LABEL',
           required: true,
-          multi: true,      
+          requiredAll: false,
+          canToggleAll: true,
+          // multi: true,   // For select   
           options: holdingsAsOptions
         })
 
