@@ -63,17 +63,17 @@ export async function post(
     console.log("holdingsPromiseResult", JSON.stringify(holdingsPromiseResult));
 
     if (picValidationPromiseResult instanceof Error) {
-      return picValidationPromiseResult
+      throw picValidationPromiseResult
+      // throw Boom.badRequest('Bad picValidationPromiseResult', picValidationPromiseResult)
     }
     if (holdingsPromiseResult instanceof Error) {
-      return holdingsPromiseResult
+      // throw Boom.badRequest('Bad holdingsPromiseResult', holdingsPromiseResult)
+      throw holdingsPromiseResult
     }
 
-    // if (!holdingsPromise) {
-    //   throw Boom.badRequest('Could not get a holdings in time. Please try again.')
-    // } 
-
-
+    if (!holdingsPromise) {
+      throw Boom.badRequest('Could not get a holdings in time. Please try again.')
+    } 
 
     // Object values
     const holdingsAsOptions = holdingsPromiseResult.map((holding: ProjectTypes.Holding) => ({
@@ -119,23 +119,37 @@ export async function post(
     // } 
 
   } catch (e) {
-    if (e instanceof Boom.Boom && e.output && e.output.statusCode === 404) {
+    console.error('First line of index catch', e)
+    // console.log('First line of index catch. e.message', e.message);
+    // const invalidMessageToOneBlinkForm = 
+    // `Invalid Property Identification Code (PIC). Was not found in the National Livestock Identification System (NLIS) PIC Register.`
+    // const invalidMessageToOneBlinkForm = "404 error"
+
+    // As this gets inserted into a <p>, use:
+    // <br /><br /> if you want paragraphs; and
+    // <br /> if you want an end of line
       
-      // As this gets inserted into a <p>, use:
-      // <br /><br /> if you want paragraphs; and
-      // <br /> if you want an end of line
-      
-      // const invalidMessage = 
-      // `Invalid Property Identification Code (PIC). Was not found in the National Livestock Identification System (NLIS) PIC Register.`
-      const invalidMessage = "404 error"
-      throw Boom.badRequest(invalidMessage)
+    let invalidMessageToOneBlinkForm;
+    if (e.message) {
+
+      // We are expecting a packet like 
+      // e.message = {"statusCode":400,"error":"Bad Request","message":"Invalid Property Identification Code (PIC). Was not found in the National Livestock Identification System (NLIS) PIC Register."}
+      console.error('e.message', e);
+      const errorMessageBody = JSON.parse(e.message);
+      console.error('errorMessageBody.message', errorMessageBody.message);
+      invalidMessageToOneBlinkForm = errorMessageBody.message;
+      throw Boom.badRequest(invalidMessageToOneBlinkForm)
+
+    } else if (e instanceof Boom.Boom && e.output && (e.output.statusCode === 404 || e.output.statusCode === 400) )  {
+      const invalidMessageToOneBlinkForm = 'Some Boom 404 or 400 error'
+      throw Boom.badRequest(invalidMessageToOneBlinkForm)
 
     } else if (e instanceof Boom.Boom && e.output && e.output.statusCode === 502 && e.message.includes("The server did not receive a response from an upstream server")) {
       throw Boom.badRequest(`${triggerElementName} with value ${triggerElementValue} could not be found in the database.`)
 
     } else {
-      console.error(e);
-      throw Boom.badImplementation('uncaught error');
+      console.error('Uncaught error', e);
+      throw Boom.badImplementation('Uncaught error');
     }
   }
 }

@@ -1,7 +1,7 @@
 // For Node 18+ we can use fetch natively.
-// import Boom from '@hapi/boom'
+import Boom from '@hapi/boom'
 
-export async function postRequest<T>(url: string, data: any, headers?: Record<string, string>): Promise<T> {
+export async function postRequest<T>(url: string, data: any, headers?: Record<string, string>): Promise<T | Error> {
   try {
 
     const defaultHeaders = { 'Content-Type': 'application/json' };
@@ -12,14 +12,15 @@ export async function postRequest<T>(url: string, data: any, headers?: Record<st
       body: JSON.stringify(data),
     });
 
-    // Assuming the response is JSON
-    // const statusCode = response.status
-    // if (!response.ok) {
-    //   console.log('Error (statusText, status):', response.statusText, statusCode)
-    //   throw new Boom.Boom(response.statusText, { statusCode })
-    // }
-    return response.json() as T;
+    const json = await response.json();
+
+    if (!response.ok) {
+      throw new Error(JSON.stringify(json));
+    }
+    console.log('postRequest. Returning apparently successful response');
+    return json as T;
   } catch (error) {
+    console.log('postRequest. Returning an error', error);
     return error
   }
 }
