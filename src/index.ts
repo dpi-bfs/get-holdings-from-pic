@@ -24,27 +24,59 @@ export async function post(
   }
   const { submission } = request.body
 
-  const PropertyPic = submission["PropertyPic"]
-  console.log("PropertyPic", PropertyPic);
+  const triggerElementValue = submission[triggerElementName]
+  console.log(triggerElementName, triggerElementValue);
 
-  if (!PropertyPic) {
-    throw Boom.badRequest(`"PropertyPic isn't giving us a value: ${PropertyPic}`)
+  if (!triggerElementValue) {
+    throw Boom.badRequest(`${triggerElementName} isn't giving us a value: ${triggerElementValue}`)
   }
 
+  let url, data, headers;
+
   try {
-    const url = process.env.POWER_AUTOMATE_HTTP_POST_URL!;
-    const data = { Pic: PropertyPic };
-    const headers = { "x-global-get-holdings-secret-key": process.env.POWER_AUTOMATE_SECRET_KEY! }
 
-    const holdings: ProjectTypes.Holding[] = await HttpWrapper.postData(url, data, headers)
-    if (!holdings) {
-      throw Boom.badRequest('Could not get a holdings in time. Please try again.')
-    } 
+    url = process.env.PIC_VALIDATION_URL!;
+    data = {
+      element: { name: triggerElementName},
+      submission: {
+        [triggerElementName]: triggerElementValue
+      }
+    }
+    console.log(`${triggerElementName} url`, url);
+    console.log(`${triggerElementName} data`, data);
+    const picValidationPromise = HttpWrapper.postRequest(url, data, headers)
+      .catch(error => {
+        return error instanceof Error ? error : new Error('Unknown error in picValidationPromise');
+      });
 
-    console.log("holdings", JSON.stringify(holdings));
+    url = process.env.POWER_AUTOMATE_HTTP_POST_URL!;
+    data = { Pic: triggerElementValue };
+    headers = { "x-global-get-holdings-secret-key": process.env.POWER_AUTOMATE_SECRET_KEY! }
+    const holdingsPromise: Promise<ProjectTypes.Holding[] | Error> = HttpWrapper.postRequest<ProjectTypes.Holding[] | Error>(url, data, headers)
+      .catch(error => {
+        return error instanceof Error ? error : new Error('Unknown error in holdings fetch');
+      });
+
+    const [picValidationPromiseResult, holdingsPromiseResult] = await Promise.all([picValidationPromise, holdingsPromise]);  
+
+    console.log("picValidationPromiseResult", JSON.stringify(picValidationPromiseResult));
+    console.log("holdingsPromiseResult", JSON.stringify(holdingsPromiseResult));
+
+    if (picValidationPromiseResult instanceof Error) {
+      return picValidationPromiseResult
+    }
+    if (holdingsPromiseResult instanceof Error) {
+      return holdingsPromiseResult
+    }
+
+    // if (!holdingsPromise) {
+    //   throw Boom.badRequest('Could not get a holdings in time. Please try again.')
+    // } 
+
+
 
     // Object values
-    const holdingsAsOptions = holdings.map((holding: ProjectTypes.Holding) => ({
+    const holdingsAsOptions = holdingsPromiseResult.map((holding: ProjectTypes.Holding) => ({
       label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${holding.CentroidLat} ${holding.CentroidLong}`,
       value: JSON.stringify(holding),
     }))
@@ -72,6 +104,7 @@ export async function post(
       TheSingleDynamicElement
     ]
     console.log('dynamicElements', JSON.stringify(dynamicElements));
+    console.log('picValidationPromiseResult', picValidationPromiseResult);
     console.timeEnd('totalLookupTimeUntilJustBeforeReturn');
     return response.setStatusCode(200).setPayload(dynamicElements)
 
@@ -98,7 +131,7 @@ export async function post(
       throw Boom.badRequest(invalidMessage)
 
     } else if (e instanceof Boom.Boom && e.output && e.output.statusCode === 502 && e.message.includes("The server did not receive a response from an upstream server")) {
-      throw Boom.badRequest(`The PropertyPic ${PropertyPic} could not be found in the database.`)
+      throw Boom.badRequest(`${triggerElementName} with value ${triggerElementValue} could not be found in the database.`)
 
     } else {
       console.error(e);
