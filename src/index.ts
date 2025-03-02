@@ -66,47 +66,65 @@ export async function post(
       throw picValidationPromiseResult
       // throw Boom.badRequest('Bad picValidationPromiseResult', picValidationPromiseResult)
     }
+
     if (holdingsPromiseResult instanceof Error) {
       // throw Boom.badRequest('Bad holdingsPromiseResult', holdingsPromiseResult)
       throw holdingsPromiseResult
+
+    } else if (Array.isArray(holdingsPromiseResult) && holdingsPromiseResult.length === 0) {
+  
+      const TheSingleDynamicElement = 
+          OneBlinkSdk.Forms.generateFormElement({
+            name: 'PropertyHoldingsInfo',
+            label: 'PropertyHoldingsInfo',
+            type: 'html', // An info element
+            customCssClasses: ['info-warning'],
+            defaultValue: `We could not find holdings associated with ${triggerElementValue}. If that PIC number is wrong, re-enter the right number in ${triggerElementName} and click [Lookup]. Otherwise continue to fill out the form.`
+          })
+  
+      // We need to return an array of elements, even for a single element.    
+      const dynamicElements = [
+        TheSingleDynamicElement
+      ]
+      console.log('dynamicElements', JSON.stringify(dynamicElements));
+      console.log('picValidationPromiseResult', picValidationPromiseResult);
+      console.timeEnd('totalLookupTimeUntilJustBeforeReturn');
+      return response.setStatusCode(200).setPayload(dynamicElements)
+
+    } else {
+       // Object values
+       const holdingsAsOptions = holdingsPromiseResult.map((holding: ProjectTypes.Holding) => ({
+        label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${holding.CentroidLat} ${holding.CentroidLong}`,
+        value: JSON.stringify(holding),
+      }))
+  
+      console.log('holdingsAsOptions', holdingsAsOptions);
+  
+      const TheSingleDynamicElement = 
+          OneBlinkSdk.Forms.generateFormElement({
+            name: 'PropertyHoldings',
+            label: 'Property holdings',
+            // type: 'select',
+            type: 'checkboxes',
+            // hint: 'Select all of the holdings where cattle tick was detected. If there is only one holding, select that. To select multiple holdings, hold the ctrl key (on Macs the command key) down and either: click with your mouse; or use keyboard arrows and space bar.', // for select
+            hint: 'Select all of the holdings where cattle tick was detected. If there is only one holding, select that.',
+            hintPosition: 'BELOW_LABEL',
+            required: true,
+            requiredAll: false,
+            canToggleAll: true,
+            // multi: true,   // For select   
+            options: holdingsAsOptions
+          })
+  
+      // We need to return an array of elements, even for a single element.    
+      const dynamicElements = [
+        TheSingleDynamicElement
+      ]
+      console.log('dynamicElements', JSON.stringify(dynamicElements));
+      console.log('picValidationPromiseResult', picValidationPromiseResult);
+      console.timeEnd('totalLookupTimeUntilJustBeforeReturn');
+      return response.setStatusCode(200).setPayload(dynamicElements)
     }
-
-    if (!holdingsPromise) {
-      throw Boom.badRequest('Could not get a holdings in time. Please try again.')
-    } 
-
-    // Object values
-    const holdingsAsOptions = holdingsPromiseResult.map((holding: ProjectTypes.Holding) => ({
-      label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${holding.CentroidLat} ${holding.CentroidLong}`,
-      value: JSON.stringify(holding),
-    }))
-
-    console.log('holdingsAsOptions', holdingsAsOptions);
-
-    const TheSingleDynamicElement = 
-        OneBlinkSdk.Forms.generateFormElement({
-          name: 'PropertyHoldings',
-          label: 'Property holdings',
-          // type: 'select',
-          type: 'checkboxes',
-          // hint: 'Select all of the holdings where cattle tick was detected. If there is only one holding, select that. To select multiple holdings, hold the ctrl key (on Macs the command key) down and either: click with your mouse; or use keyboard arrows and space bar.', // for select
-          hint: 'Select all of the holdings where cattle tick was detected. If there is only one holding, select that.',
-          hintPosition: 'BELOW_LABEL',
-          required: true,
-          requiredAll: false,
-          canToggleAll: true,
-          // multi: true,   // For select   
-          options: holdingsAsOptions
-        })
-
-    // We need to return an array of elements, even for a single element.    
-    const dynamicElements = [
-      TheSingleDynamicElement
-    ]
-    console.log('dynamicElements', JSON.stringify(dynamicElements));
-    console.log('picValidationPromiseResult', picValidationPromiseResult);
-    console.timeEnd('totalLookupTimeUntilJustBeforeReturn');
-    return response.setStatusCode(200).setPayload(dynamicElements)
 
     // Returning a well formed object, without error codes, is enough for the OneBlink UI's Data lookup element
     // to register this as valid.
@@ -117,6 +135,7 @@ export async function post(
     //   "TempPicDataTarget": JSON.stringify(submission),
     //   "OtherElement": "Some Value"
     // } 
+
 
   } catch (e) {
     console.error('First line of index catch', e)
@@ -138,7 +157,7 @@ export async function post(
       const errorMessageBody = JSON.parse(e.message);
       console.error('errorMessageBody.message', errorMessageBody.message);
       invalidMessageToOneBlinkForm = errorMessageBody.message;
-      throw Boom.badRequest(invalidMessageToOneBlinkForm)
+      throw Boom.badRequest(invalidMessageToOneBlinkForm);
 
     } else if (e instanceof Boom.Boom && e.output && (e.output.statusCode === 404 || e.output.statusCode === 400) )  {
       const invalidMessageToOneBlinkForm = 'Some Boom 404 or 400 error'
