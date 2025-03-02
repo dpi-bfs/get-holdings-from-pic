@@ -17,7 +17,9 @@ export async function post(
 ) {
   console.time('totalLookupTimeUntilJustBeforeReturn');
   const triggerElementName = request.body.element.name;
+  const triggerElementLabel = request.body.element.label;
   console.log("triggerElementName", triggerElementName);
+  console.log("triggerElementLabel", triggerElementLabel);
   
   if (!request || !request.body || !request.body.submission) {
     throw Boom.badRequest('submission missing')
@@ -79,7 +81,7 @@ export async function post(
             label: 'PropertyHoldingsInfo',
             type: 'html', // An info element
             customCssClasses: ['info-warning'],
-            defaultValue: `We could not find holdings associated with ${triggerElementValue}. If that PIC number is wrong, re-enter the right number in ${triggerElementName} and click [Lookup]. Otherwise continue to fill out the form.`
+            defaultValue: `We could not find holdings associated with ${triggerElementValue}. If that PIC number is wrong, re-enter the right number in '${triggerElementLabel}' and click [Lookup]. Otherwise continue to fill out the form.`
           })
   
       // We need to return an array of elements, even for a single element.    
