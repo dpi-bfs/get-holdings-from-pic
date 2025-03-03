@@ -97,7 +97,7 @@ export async function post(
        // Object values
        const coordRoundDecimalPlaces = 6; 
        const holdingsAsOptions = holdingsPromiseResult.map((holding: ProjectTypes.Holding) => ({
-        label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${(holding.CentroidLat).toFixed(coordRoundDecimalPlaces)}, ${(holding.CentroidLong).toFixed(coordRoundDecimalPlaces)}`,
+        label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${(holding.CentroidLat).toFixed(coordRoundDecimalPlaces)}, ${(holding.CentroidLong).toFixed(coordRoundDecimalPlaces)} | ${holding.LlsRegion}`,
         value: JSON.stringify(holding),
       }))
 
