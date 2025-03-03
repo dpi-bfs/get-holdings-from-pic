@@ -81,7 +81,7 @@ export async function post(
             label: 'PropertyHoldingsInfo',
             type: 'html', // An info element
             customCssClasses: ['info-warning'],
-            defaultValue: `We could not find holdings associated with ${triggerElementValue}. If that PIC number is wrong, re-enter the right number in '${triggerElementLabel}' and click [Lookup]. Otherwise continue to fill out the form.`
+            defaultValue: `We could not find holdings associated with ${triggerElementValue}. <br /><br />If that PIC number is wrong, re-enter the right number in '${triggerElementLabel}' and click [Lookup]. Otherwise continue to fill out the form.`
           })
   
       // We need to return an array of elements, even for a single element.    
@@ -95,11 +95,12 @@ export async function post(
 
     } else {
        // Object values
+       const coordRoundDecimalPlaces = 6; 
        const holdingsAsOptions = holdingsPromiseResult.map((holding: ProjectTypes.Holding) => ({
-        label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${holding.CentroidLat} ${holding.CentroidLong}`,
+        label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${(holding.CentroidLat).toFixed(coordRoundDecimalPlaces)}, ${(holding.CentroidLong).toFixed(coordRoundDecimalPlaces)}`,
         value: JSON.stringify(holding),
       }))
-  
+
       console.log('holdingsAsOptions', holdingsAsOptions);
   
       const TheSingleDynamicElement = 
@@ -109,7 +110,7 @@ export async function post(
             // type: 'select',
             type: 'checkboxes',
             // hint: 'Select all of the holdings where cattle tick was detected. If there is only one holding, select that. To select multiple holdings, hold the ctrl key (on Macs the command key) down and either: click with your mouse; or use keyboard arrows and space bar.', // for select
-            hint: 'Select all of the holdings where cattle tick was detected. If there is only one holding, select that.',
+            hint: 'Select all of the holdings where cattle tick was detected. If there is only one holding, select that. The first part of a checkbox option is a holding number; and the options are sorted in holding number order.',
             hintPosition: 'BELOW_LABEL',
             required: true,
             requiredAll: false,
