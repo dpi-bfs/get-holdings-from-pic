@@ -8,6 +8,8 @@ export type Holding = {
   City: string;
   State: string;
   PostCode: string;
+  Area: number;
+  AreaUnit: string;
   CentroidLong: number;
   CentroidLat: number;
   Shape: string;

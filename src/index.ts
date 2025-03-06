@@ -96,10 +96,23 @@ export async function post(
     } else {
        // Object values
        const coordRoundDecimalPlaces = 6; 
-       const holdingsAsOptions = holdingsPromiseResult.map((holding: ProjectTypes.Holding) => ({
-        label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode} | ${(holding.CentroidLat).toFixed(coordRoundDecimalPlaces)}, ${(holding.CentroidLong).toFixed(coordRoundDecimalPlaces)} | ${holding.LlsRegion}`,
-        value: JSON.stringify(holding),
-      }))
+       const holdingsAsOptions = holdingsPromiseResult.map((holding: ProjectTypes.Holding) => {
+        const areaString =
+          holding.Area != null && holding.AreaUnit != null
+            ? ` | ${holding.Area.toFixed(0)} ${holding.AreaUnit}`
+            : '';
+      
+        const latLongString =
+          holding.CentroidLat != null && holding.CentroidLong != null
+            ? ` | ${holding.CentroidLat.toFixed(coordRoundDecimalPlaces)}, ${holding.CentroidLong.toFixed(coordRoundDecimalPlaces)}`
+            : '';
+      
+        return {
+          label: `${holding.HoldingNumber} | ${holding.StreetAddress} | ${holding.City} | ${holding.State} | ${holding.PostCode}${areaString}${latLongString} | ${holding.LlsRegion}`,
+          value: JSON.stringify(holding),
+        };
+      });
+      
 
       console.log('holdingsAsOptions', holdingsAsOptions);
   
